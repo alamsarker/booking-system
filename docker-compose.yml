@@ -1,0 +1,50 @@
+version: '2'
+networks:
+  basic:
+    driver:
+      bridge
+
+volumes:
+  db:
+    driver: local
+
+services:
+  nginx:
+    networks:
+      - basic
+    build:
+      dockerfile: Dockerfile-nginx
+      context: .
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+    links:
+      - fpm
+  fpm:
+    container_name: bs-api-fpm
+    networks:
+      - basic
+    volumes:
+      - .:/var/www/html
+    build:
+      context: .
+      dockerfile: Dockerfile-fpm
+    links:
+      - db
+    environment:
+      CONFIG_DBHOST: db
+      CONFIG_DBUSER: booking
+      CONFIG_DBPASS: booking
+      CONFIG_DBNAME: booking
+  db:
+    networks:
+      - basic  
+    image: postgres:13-alpine
+    environment:
+      MYSQL_ROOT_PASSWORD: booking
+      POSTGRES_DB: booking
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+    volumes:
+      - ./data/postgre:/var/lib/postgresql/data:rw
